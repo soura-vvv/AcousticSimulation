@@ -30,12 +30,14 @@ print("source_counts")
 print(source_counts)
 print("source_microphone_distances")
 print(source_microphone_distances)
-'''
+
 # Loop over all combinations
 for room_volume in room_volumes:
     for rt60 in rt60_values:
         for num_sources in source_counts:
             for source_microphone_distance in source_microphone_distances:
+            
+                print("-----------------------------------------------------------------")
                 # Calculate room dimensions
                 min_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
                 max_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
@@ -46,6 +48,10 @@ for room_volume in room_volumes:
                 # Calculate absorption
                 e_absorption, max_order = pra.inverse_sabine(rt60, room_dimensions)
 
+                print("Room Dimensions:")
+                print(room_dimensions)
+                print("rt60")
+                print(rt60)
                 # Create the room
                 room = pra.ShoeBox(room_dimensions, fs=sample_rate, materials=pra.Material(e_absorption), max_order=max_order)
 
@@ -54,24 +60,29 @@ for room_volume in room_volumes:
                     source_position = [np.random.uniform(0, room_dimensions[0] / 2),
                                        np.random.uniform(0, room_dimensions[1]),
                                        np.random.uniform(0, room_dimensions[2])]
+                    print("Source Position:")
+                    print(source_position)
                     room.add_source(source_position)
+                
 
                 # Add microphone
                 microphone_position = [np.random.uniform(room_dimensions[0] / 2, room_dimensions[0]),
                                        np.random.uniform(0, room_dimensions[1]),
                                        np.random.uniform(0, room_dimensions[2])]
                 room.add_microphone(microphone_position)
-
+                print("Microphone Position")
+                print(microphone_position)
                 # Compute RIR
                 room.compute_rir()
 
                 # Move microphone closer to the half line
-                microphone_position[0] -= source_microphone_distance
-                room.move_microphone(microphone_position)
-
+                #microphone_position[0] -= source_microphone_distance
+                #room.move_microphone(microphone_position)
+                print(len(room.rir[0]))
                 # Plot RIR (optional)
                 # room.plot_rir()
-
+                
                 # Save RIR or further processing
                 # Save or process room impulse response here
-'''
+            exit()
+
