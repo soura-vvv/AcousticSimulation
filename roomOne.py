@@ -1,46 +1,88 @@
 import pyroomacoustics as pra
-import IPython.display as ipd
-import librosa
-import librosa.display
-import matplotlib.pyplot as plt
+import numpy as np
 
-#Initialize Parameters
-sampleRate=16000
+# Parameters
+sample_rate = 16000
+
+# Define minimum and maximum values
+min_room_volume = 25  # cubic meters
+max_room_volume = 1000  # cubic meters
+min_rt60 = 0.3  # seconds
 
 
+max_rt60 = 12  # seconds
+min_sources = 1
+max_sources = 20
+min_source_microphone_distance = 1  # meters
+max_source_microphone_distance = 5  # meters
 
-#Room Dimensions
+# Generate all possible combinations
 
-# The desired reverberation time and dimensions of the room
-rt60 = 0.5  # seconds
-room_dim = [9, 7.5, 3.5]  # meters
+room_volumes = np.arange(min_room_volume, max_room_volume + 1, 25)
+rt60_values = np.linspace(min_rt60, max_rt60, num=10)
+source_counts = np.arange(min_sources, max_sources + 1)
+source_microphone_distances = np.linspace(min_source_microphone_distance, max_source_microphone_distance, num=5)
+print("room_volumes:")
+print(room_volumes)
+print("rt_60valjues")
+print(rt60_values)
+print("source_counts")
+print(source_counts)
+print("source_microphone_distances")
+print(source_microphone_distances)
 
-# We invert Sabine's formula to obtain the parameters for the ISM simulator
-e_absorption, max_order = pra.inverse_sabine(rt60, room_dim)
+# Loop over all combinations
+for room_volume in room_volumes:
+    for rt60 in rt60_values:
+        for num_sources in source_counts:
+            for source_microphone_distance in source_microphone_distances:
+            
+                print("-----------------------------------------------------------------")
+                # Calculate room dimensions
+                min_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
+                max_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
+                room_dimensions = [np.random.uniform(min_dimension, max_dimension),
+                                   np.random.uniform(min_dimension, max_dimension),
+                                   np.random.uniform(min_dimension, max_dimension)]
 
-# Create the room
-room = pra.ShoeBox(
-    room_dim, fs=sampleRate, materials=pra.Material(e_absorption), max_order=max_order
-)
+                # Calculate absorption
+                e_absorption, max_order = pra.inverse_sabine(rt60, room_dimensions)
 
-#room=pra.ShoeBox(room_dim,fs=sampleRate,max_order=10)
+                print("Room Dimensions:")
+                print(room_dimensions)
+                print("rt60")
+                print(rt60)
+                # Create the room
+                room = pra.ShoeBox(room_dimensions, fs=sample_rate, materials=pra.Material(e_absorption), max_order=max_order)
 
-room.plot();
+                # Add sources
+                for _ in range(num_sources):
+                    source_position = [np.random.uniform(0, room_dimensions[0] / 2),
+                                       np.random.uniform(0, room_dimensions[1]),
+                                       np.random.uniform(0, room_dimensions[2])]
+                    print("Source Position:")
+                    print(source_position)
+                    room.add_source(source_position)
+                
 
-room.add_source([2,5,5]);
+                # Add microphone
+                microphone_position = [np.random.uniform(room_dimensions[0] / 2, room_dimensions[0]),
+                                       np.random.uniform(0, room_dimensions[1]),
+                                       np.random.uniform(0, room_dimensions[2])]
+                room.add_microphone(microphone_position)
+                print("Microphone Position")
+                print(microphone_position)
+                # Compute RIR
+                room.compute_rir()
 
-room.add_microphone([8,5,5]);
+                # Move microphone closer to the half line
+                #microphone_position[0] -= source_microphone_distance
+                #room.move_microphone(microphone_position)
+                print(len(room.rir[0]))
+                # Plot RIR (optional)
+                # room.plot_rir()
+                
+                # Save RIR or further processing
+                # Save or process room impulse response here
+            exit()
 
-#fig, ax = room.plot(mic_marker_size=30)
-#ax.set_xlim([0,11])
-#ax.set_ylim([0,11])
-#ax.set_zlim([0,11]);
-
-room.compute_rir()
-
-#plt.figure()
-#room.plot_rir()
-#plt.grid()
-#print(len(room.rir[0][2]))
-#t60 = pra.experimental.measure_rt60(room.rir[0][0], fs=room.fs, plot=True)
-#print(f"The RT60 is {t60 * 1000:.0f} ms")
