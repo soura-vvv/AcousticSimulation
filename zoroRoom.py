@@ -115,7 +115,7 @@ for room_volume in room_volumes:
             print(microphone_position)
             # Compute RIR
             print("Compute UNZOOMED AUDIO-------------------SIMULATE")
-            room.simulate()
+            room.simulate()#reference_mic=0,snr=-10)
             print(len(room.mic_array.signals[0]))
             write("exampleRIR.wav", sample_rate, room.rir[0][0].astype(np.int16))
             write("example.wav", sample_rate, room.mic_array.signals[0].astype(np.int16))
