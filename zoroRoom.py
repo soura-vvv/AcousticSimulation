@@ -22,6 +22,7 @@ num_microphone_positions_width=5
 source_height = 1.7  # meters
 microphone_height = 1.7  # meters
 
+sources=[]
 # Generate all possible combinations
 
 room_volumes = np.arange(min_room_volume, max_room_volume + 1, 25)
@@ -36,6 +37,9 @@ print("source_counts")
 print(source_counts)
 print("source_microphone_distances")
 print(source_microphone_distances)
+
+
+
 
 # Loop over all combinations
 for room_volume in room_volumes:
@@ -61,17 +65,18 @@ for room_volume in room_volumes:
             print(rt60)
             # Create the room
             room = pra.ShoeBox(room_dimensions, fs=sample_rate, materials=pra.Material(e_absorption), max_order=max_order)
-
+            sources=[]
             # Add sources
             for _ in range(num_sources):
                 source_position = [np.random.uniform(0,half_length),
                                     np.random.uniform(0, room_dimensions[1]),
                                     source_height]
-                source_position=np.round(source_position,2)
+                sources.append(np.round(source_position,2))
                 print("Source Position:")
                 print(source_position)
-                room.add_source(source_position)
                 
+            for source in (sources):
+                room.add_source(source)
 
             # Add microphone
             microphone_position = [room_dimensions[0], room_dimensions[1]/2, microphone_height]
@@ -94,7 +99,22 @@ for room_volume in room_volumes:
                 #print(i * (room_dimensions[1] / (num_microphone_positions_width + 1)))
                     microphone_position[1]=room_dimensions[1] - j * (room_dimensions[1] / (num_microphone_positions_width + 1))
                     microphone_position=np.round(microphone_position,2)
+
+                    # Create the room
+                    room = pra.ShoeBox(room_dimensions, fs=sample_rate, materials=pra.Material(e_absorption), max_order=max_order)
+                    #Add Sources
+                    for source in (sources):
+                        room.add_source(source)
+                        print("Source Position:")
+                        print(source_position)
+                    
+                    #Add Microphone
+                    room.add_microphone(microphone_position)
+
+
+
                     print(microphone_position)
+                    room.compute_rir()
                     print("Compute------------------------------------------")
                     # Compute RIR for the new microphone position
                     #room.compute_rir()
@@ -112,8 +132,8 @@ for room_volume in room_volumes:
             print(len(room.rir[0]))
             # Plot RIR (optional)
             # room.plot_rir()
-                
+            
             # Save RIR or further processing
             # Save or process room impulse response here
-            exit()
+        exit()
 
