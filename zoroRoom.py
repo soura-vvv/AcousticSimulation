@@ -28,7 +28,7 @@ sources=[]
 room_volumes = np.arange(min_room_volume, max_room_volume + 1, 25)
 rt60_values = np.linspace(min_rt60, max_rt60, num=10)
 source_counts = np.arange(min_sources, max_sources + 1)
-source_microphone_distances = np.linspace(min_source_microphone_distance, max_source_microphone_distance, num=5)
+#source_microphone_distances = np.linspace(min_source_microphone_distance, max_source_microphone_distance, num=5)
 print("room_volumes:")
 print(room_volumes)
 print("rt_60valjues")
@@ -36,10 +36,16 @@ print(rt60_values)
 print("source_counts")
 print(source_counts)
 print("source_microphone_distances")
-print(source_microphone_distances)
+#print(source_microphone_distances)
 
 
 
+
+corpus = pra.datasets.CMUArcticCorpus(download=False)
+# http://www.festvox.org/cmu_arctic/
+
+print(corpus)
+exit()
 
 # Loop over all combinations
 for room_volume in room_volumes:
