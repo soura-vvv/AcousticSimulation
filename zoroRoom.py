@@ -53,9 +53,13 @@ dataset_num_samples=len(corpus)
 json_file="zoro.json"
 # Loop over all combinations
 for room_dimensions in room_dimensions_list:
+    print("-----------------------------------------------------------------")
+    print("Room Dimensions: ")
+    print(room_dimensions)
     for num_sources in source_counts:
+        print("Number Of Sources:")
+        print(num_sources)
         
-        print("-----------------------------------------------------------------")
         # Calculate room dimensions
         #min_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
         #max_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
@@ -72,8 +76,8 @@ for room_dimensions in room_dimensions_list:
         # Calculate absorption
         #e_absorption, max_order = pra.inverse_sabine(rt60, room_dimensions)
 
-        print("Room Dimensions:")
-        print(room_dimensions)
+        #print("Room Dimensions:")
+        #print(room_dimensions)
 
         room = pra.ShoeBox(room_dimensions, fs=sample_rate)#, materials=pra.Material(e_absorption), max_order=max_order)
         sources=[]
@@ -84,8 +88,8 @@ for room_dimensions in room_dimensions_list:
                                 np.random.uniform(0, room_dimensions[1]),
                                 source_height]
             sources.append(np.round(source_position,2))
-            print("Source Position:")
-            print(np.round(source_position,2))
+            #print("Source Position:")
+            #print(np.round(source_position,2))
             
         for source in (sources):
             sig=corpus[np.random.randint(0,dataset_num_samples)].data.astype(float)
@@ -97,10 +101,10 @@ for room_dimensions in room_dimensions_list:
         microphone_position = [room_dimensions[0], room_dimensions[1]/2, microphone_height]
         #microphone_position = [1.5,1.5,1.7]
         room.add_microphone(microphone_position)#,directivity=dir_obj)
-        print("Microphone Position")
-        print(microphone_position)
+        #print("Microphone Position")
+        #print(microphone_position)
         # Compute RIR
-        print("Compute UNZOOMED AUDIO-------------------SIMULATE")
+        #print("Compute UNZOOMED AUDIO-------------------SIMULATE")
         room.simulate()#reference_mic=0,snr=-10)
         #print(len(room.mic_array.signals[0]))
         write(f"{directoryUnzoomed}/{microphone_position[0]}_{microphone_position[1]}_{microphone_position[2]}.wav", sample_rate, room.mic_array.signals[0].astype(np.int16))
@@ -133,8 +137,8 @@ for room_dimensions in room_dimensions_list:
                 idx=0
                 for source in (sources):
                     room.add_source(source,signal=signals[idx])
-                    print("Source Position:")
-                    print(source)
+                    #print("Source Position:")
+                    #print(source)
                     idx+=1
                 
                 #Add Microphone
@@ -144,12 +148,13 @@ for room_dimensions in room_dimensions_list:
 
                 #print(microphone_position)
                 room.simulate()
-                print("Compute------------------------------------------")
+                #print("Compute------------------------------------------")
                 
                 write(f"{directoryZoomed}/{microphone_position[0]}_{microphone_position[1]}_{microphone_position[2]}.wav", sample_rate, room.mic_array.signals[0].astype(np.int16))
                 file_count+=1
                 
-                coordinatex=np.round((microphone_position[0]-(room_dimensions[0]/2))/(room_dimensions[0]/2),2)
+                coordinatex=(microphone_position[0]-(room_dimensions[0]/2))/(room_dimensions[0]/2)
+                coordinatex=np.round(1-coordinatex,2)
                 coordinatey=np.round(microphone_position[1]/room_dimensions[1],2)
                 length=np.round(len(room.mic_array.signals[0])/sample_rate,2)
                 jsonData={f"{room_dimensions[0]}_{room_dimensions[1]}_{room_dimensions[2]}_{num_sources}/{microphone_position[0]}_{microphone_position[1]}_{microphone_position[2]}":{
@@ -188,7 +193,7 @@ for room_dimensions in room_dimensions_list:
             
             # Save RIR or further processing
             # Save or process room impulse response here
-        
+    exit()
 
 print("Total Number of files: ")
 print(file_count)
