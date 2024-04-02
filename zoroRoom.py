@@ -2,6 +2,7 @@ from email.mime import audio
 import pyroomacoustics as pra
 import numpy as np
 from scipy.io.wavfile import write
+import os
 from pyroomacoustics.directivities import (
     DirectivityPattern,
     DirectionVector,
@@ -19,13 +20,13 @@ dir_obj = CardioidFamily(
 sample_rate = 16000
 
 # Define minimum and maximum values
-min_room_volume = 100  # cubic meters
-max_room_volume = 1000  # cubic meters
+min_room_volume = 25  # cubic meters
+max_room_volume = 100  # cubic meters
 min_rt60 = 5  # seconds
 
 
 max_rt60 = 12  # seconds
-min_sources = 5
+min_sources = 1
 max_sources = 20
 
 
@@ -38,14 +39,14 @@ microphone_height = 1.7  # meters
 sources=[]
 # Generate all possible combinations
 
-room_volumes = np.arange(min_room_volume, max_room_volume + 1, 25)
-rt60_values = np.linspace(min_rt60, max_rt60, num=10)
+room_volumes = np.arange(min_room_volume, max_room_volume + 1, 10)
+#rt60_values = np.linspace(min_rt60, max_rt60, num=10)
 source_counts = np.arange(min_sources, max_sources + 1)
 #source_microphone_distances = np.linspace(min_source_microphone_distance, max_source_microphone_distance, num=5)
 print("room_volumes:")
 print(room_volumes)
-print("rt_60valjues")
-print(rt60_values)
+#print("rt_60valjues")
+#print(rt60_values)
 print("source_counts")
 print(source_counts)
 #print("source_microphone_distances")
@@ -54,7 +55,7 @@ print(source_counts)
 
 
 
-corpus = pra.datasets.CMUArcticCorpus(download=True)
+corpus = pra.datasets.CMUArcticCorpus(download=False)
 # http://www.festvox.org/cmu_arctic/
 
 dataset_num_samples=15583
@@ -79,14 +80,17 @@ for room_volume in room_volumes:
                             np.random.uniform(min_dimension, max_dimension)]
 
         # Split the room into two halves
+        directory = os.path.join("Dataset", f"{room_dimensions}_{num_sources}","Unzoomed")
+        os.makedirs(directory,exist_ok=True)
         half_length = room_dimensions[0] / 2
+        
         # Calculate absorption
         #e_absorption, max_order = pra.inverse_sabine(rt60, room_dimensions)
 
         print("Room Dimensions:")
         print(room_dimensions)
-        print("rt60")
-        print(rt60)
+        #print("rt60")
+        #print(rt60)
         # Create the room
         print("ORDERRR")
         #print(max_order)
@@ -116,9 +120,11 @@ for room_volume in room_volumes:
         print("Compute UNZOOMED AUDIO-------------------SIMULATE")
         room.simulate()#reference_mic=0,snr=-10)
         print(len(room.mic_array.signals[0]))
-        write("exampleRIR.wav", sample_rate, room.rir[0][0].astype(np.int16))
-        write("example.wav", sample_rate, room.mic_array.signals[0].astype(np.int16))
-        exit()
+        #write("exampleRIR.wav", sample_rate, room.rir[0][0].astype(np.int16))
+        
+        write(f"{directory}/{microphone_position}.wav", sample_rate, room.mic_array.signals[0].astype(np.int16))
+        directory = os.path.join("Dataset", f"{room_dimensions}_{num_sources}","Zoomed")
+        os.makedirs(directory,exist_ok=True)
         #Switch Microphone Positions (Moving it closer to the source graudually)
         for i in range(1, num_microphone_positions_length + 1):
             # Move microphone position
@@ -132,7 +138,7 @@ for room_volume in room_volumes:
                 microphone_position=np.round(microphone_position,2)
 
                 # Create the room
-                room = pra.ShoeBox(room_dimensions, fs=sample_rate, materials=pra.Material(e_absorption), max_order=max_order)
+                room = pra.ShoeBox(room_dimensions, fs=sample_rate)
                 #Add Sources
                 for source in (sources):
                     room.add_source(source,signal=corpus[np.random.randint(0,dataset_num_samples)].data.astype(float))
@@ -144,9 +150,10 @@ for room_volume in room_volumes:
 
 
 
-                print(microphone_position)
-                room.compute_rir()
+                #print(microphone_position)
+                room.simulate()
                 print("Compute------------------------------------------")
+                write(f"{directory}/{microphone_position}.wav", sample_rate, room.mic_array.signals[0].astype(np.int16))
                 # Compute RIR for the new microphone position
                 #room.compute_rir()
                 #num_microphone_positions_width-=2
