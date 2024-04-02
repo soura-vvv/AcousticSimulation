@@ -193,7 +193,7 @@ for room_dimensions in room_dimensions_list:
             
             # Save RIR or further processing
             # Save or process room impulse response here
-    exit()
+    
 
 print("Total Number of files: ")
 print(file_count)
