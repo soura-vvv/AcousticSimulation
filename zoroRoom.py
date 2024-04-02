@@ -54,7 +54,7 @@ print(source_counts)
 
 
 
-corpus = pra.datasets.CMUArcticCorpus(download=False)
+corpus = pra.datasets.CMUArcticCorpus(download=True)
 # http://www.festvox.org/cmu_arctic/
 
 dataset_num_samples=15583
@@ -68,95 +68,94 @@ print(audioz.size)
 
 # Loop over all combinations
 for room_volume in room_volumes:
-    for rt60 in rt60_values:
-        for num_sources in source_counts:
+    for num_sources in source_counts:
+        
+        print("-----------------------------------------------------------------")
+        # Calculate room dimensions
+        min_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
+        max_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
+        room_dimensions = [np.random.uniform(min_dimension, max_dimension),
+                            np.random.uniform(min_dimension, max_dimension),
+                            np.random.uniform(min_dimension, max_dimension)]
+
+        # Split the room into two halves
+        half_length = room_dimensions[0] / 2
+        # Calculate absorption
+        #e_absorption, max_order = pra.inverse_sabine(rt60, room_dimensions)
+
+        print("Room Dimensions:")
+        print(room_dimensions)
+        print("rt60")
+        print(rt60)
+        # Create the room
+        print("ORDERRR")
+        #print(max_order)
+        #exit()
+        room = pra.ShoeBox(room_dimensions, fs=sample_rate)#, materials=pra.Material(e_absorption), max_order=max_order)
+        sources=[]
+        # Add sources
+        for _ in range(num_sources):
+            source_position = [np.random.uniform(0,half_length),
+                                np.random.uniform(0, room_dimensions[1]),
+                                source_height]
+            sources.append(np.round(source_position,2))
+            print("Source Position:")
+            print(source_position)
             
-            print("-----------------------------------------------------------------")
-            # Calculate room dimensions
-            min_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
-            max_dimension = max(2.5, (room_volume / 2.5) ** (1 / 3))
-            room_dimensions = [np.random.uniform(min_dimension, max_dimension),
-                                np.random.uniform(min_dimension, max_dimension),
-                                np.random.uniform(min_dimension, max_dimension)]
+        for source in (sources):
+            room.add_source(source,signal=corpus[np.random.randint(0,dataset_num_samples)].data.astype(float))
+            #room.sources[]
 
-            # Split the room into two halves
-            half_length = room_dimensions[0] / 2
-            # Calculate absorption
-            #e_absorption, max_order = pra.inverse_sabine(rt60, room_dimensions)
+        # Add microphone
+        microphone_position = [room_dimensions[0], room_dimensions[1]/2, microphone_height]
+        #microphone_position = [1.5,1.5,1.7]
+        room.add_microphone(microphone_position,directivity=dir_obj)
+        print("Microphone Position")
+        print(microphone_position)
+        # Compute RIR
+        print("Compute UNZOOMED AUDIO-------------------SIMULATE")
+        room.simulate()#reference_mic=0,snr=-10)
+        print(len(room.mic_array.signals[0]))
+        write("exampleRIR.wav", sample_rate, room.rir[0][0].astype(np.int16))
+        write("example.wav", sample_rate, room.mic_array.signals[0].astype(np.int16))
+        exit()
+        #Switch Microphone Positions (Moving it closer to the source graudually)
+        for i in range(1, num_microphone_positions_length + 1):
+            # Move microphone position
+            microphone_position[0] = room_dimensions[0] - i * (room_dimensions[0] / (2*(num_microphone_positions_length + 1)))
+            #room.move_microphone(microphone_position)
+            microphone_position=np.round(microphone_position,2)
 
-            print("Room Dimensions:")
-            print(room_dimensions)
-            print("rt60")
-            print(rt60)
-            # Create the room
-            print("ORDERRR")
-            #print(max_order)
-            #exit()
-            room = pra.ShoeBox(room_dimensions, fs=sample_rate)#, materials=pra.Material(e_absorption), max_order=max_order)
-            sources=[]
-            # Add sources
-            for _ in range(num_sources):
-                source_position = [np.random.uniform(0,half_length),
-                                    np.random.uniform(0, room_dimensions[1]),
-                                    source_height]
-                sources.append(np.round(source_position,2))
-                print("Source Position:")
-                print(source_position)
-                
-            for source in (sources):
-                room.add_source(source,signal=corpus[np.random.randint(0,dataset_num_samples)].data.astype(float))
-                #room.sources[]
-
-            # Add microphone
-            microphone_position = [room_dimensions[0], room_dimensions[1]/2, microphone_height]
-            #microphone_position = [1.5,1.5,1.7]
-            room.add_microphone(microphone_position,directivity=dir_obj)
-            print("Microphone Position")
-            print(microphone_position)
-            # Compute RIR
-            print("Compute UNZOOMED AUDIO-------------------SIMULATE")
-            room.simulate()#reference_mic=0,snr=-10)
-            print(len(room.mic_array.signals[0]))
-            write("exampleRIR.wav", sample_rate, room.rir[0][0].astype(np.int16))
-            write("example.wav", sample_rate, room.mic_array.signals[0].astype(np.int16))
-            exit()
-            #Switch Microphone Positions (Moving it closer to the source graudually)
-            for i in range(1, num_microphone_positions_length + 1):
-                # Move microphone position
-                microphone_position[0] = room_dimensions[0] - i * (room_dimensions[0] / (2*(num_microphone_positions_length + 1)))
-                #room.move_microphone(microphone_position)
+            for j in range(1,num_microphone_positions_width+1):
+            #print(i * (room_dimensions[1] / (num_microphone_positions_width + 1)))
+                microphone_position[1]=room_dimensions[1] - j * (room_dimensions[1] / (num_microphone_positions_width + 1))
                 microphone_position=np.round(microphone_position,2)
-    
-                for j in range(1,num_microphone_positions_width+1):
-                #print(i * (room_dimensions[1] / (num_microphone_positions_width + 1)))
-                    microphone_position[1]=room_dimensions[1] - j * (room_dimensions[1] / (num_microphone_positions_width + 1))
-                    microphone_position=np.round(microphone_position,2)
 
-                    # Create the room
-                    room = pra.ShoeBox(room_dimensions, fs=sample_rate, materials=pra.Material(e_absorption), max_order=max_order)
-                    #Add Sources
-                    for source in (sources):
-                        room.add_source(source,signal=corpus[np.random.randint(0,dataset_num_samples)].data.astype(float))
-                        print("Source Position:")
-                        print(source_position)
-                    
-                    #Add Microphone
-                    room.add_microphone(microphone_position)
+                # Create the room
+                room = pra.ShoeBox(room_dimensions, fs=sample_rate, materials=pra.Material(e_absorption), max_order=max_order)
+                #Add Sources
+                for source in (sources):
+                    room.add_source(source,signal=corpus[np.random.randint(0,dataset_num_samples)].data.astype(float))
+                    print("Source Position:")
+                    print(source_position)
+                
+                #Add Microphone
+                room.add_microphone(microphone_position)
 
 
 
-                    print(microphone_position)
-                    room.compute_rir()
-                    print("Compute------------------------------------------")
-                    # Compute RIR for the new microphone position
-                    #room.compute_rir()
-                    #num_microphone_positions_width-=2
-                    #room_width_temp=room_width_temp - 1 * (room_dimensions[1] / (num_microphone_positions_width + 1))
-                    # Plot RIR (optional)
-                    # room.plot_rir()
+                print(microphone_position)
+                room.compute_rir()
+                print("Compute------------------------------------------")
+                # Compute RIR for the new microphone position
+                #room.compute_rir()
+                #num_microphone_positions_width-=2
+                #room_width_temp=room_width_temp - 1 * (room_dimensions[1] / (num_microphone_positions_width + 1))
+                # Plot RIR (optional)
+                # room.plot_rir()
 
-                    # Save RIR or further processing
-                    # Save or process room impulse response here
+                # Save RIR or further processing
+                # Save or process room impulse response here
 
             # Move microphone closer to the half line
             #microphone_position[0] -= source_microphone_distance
